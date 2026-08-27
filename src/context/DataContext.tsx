@@ -16,7 +16,10 @@ type ApiAccessKey = {
   revokedBy: string | null;
   status: FlowKeyStatus;
   updatedAt: string | null;
+  permission: AccessKeyPermission;
 };
+
+export type AccessKeyPermission = 'read' | 'write' | 'full';
 
 export type AccessKey = LegacyAccessKey & Omit<ApiAccessKey, 'id' | 'status'> & { id: string };
 
@@ -34,7 +37,7 @@ interface DataContextType {
   isLoading: boolean;
   error: string;
   refreshKeys: () => Promise<void>;
-  createKey: (label: string, expiresAt: string | null) => Promise<CreatedAccessKey>;
+  createKey: (label: string, expiresAt: string | null, permission: AccessKeyPermission) => Promise<CreatedAccessKey>;
   revokeKey: (id: string) => Promise<void>;
 }
 
@@ -60,6 +63,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       keyMasked: `FLOW_••••••••••••${key.id.slice(-4).toUpperCase()}`,
       keyLastFour: key.id.slice(-4).toUpperCase(),
       permissions: [],
+      permission: key.permission || 'full',
       created: key.createdAt ? new Date(key.createdAt).toLocaleDateString() : 'Unknown',
       expires: key.expiresAt ? new Date(key.expiresAt).toLocaleDateString() : null,
       lastUsed: key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : 'Never',
@@ -82,9 +86,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const createKey = async (label: string, expiresAt: string | null) => {
+  const createKey = async (label: string, expiresAt: string | null, permission: AccessKeyPermission) => {
     const response = await fetch(apiUrl('/flow/admin/access-keys'), {
-      body: JSON.stringify({ label, ...(expiresAt ? { expiresAt } : {}) }),
+      body: JSON.stringify({ label, permission, ...(expiresAt ? { expiresAt } : {}) }),
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',

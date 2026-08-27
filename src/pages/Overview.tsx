@@ -162,6 +162,9 @@ export default function Overview() {
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex flex-wrap gap-1">
+                                            <span className="text-xs text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded font-medium">
+                                                {key.permission === 'full' ? 'Full access' : `${key.permission[0].toUpperCase()}${key.permission.slice(1)} access`}
+                                            </span>
                                             {key.permissions.slice(0, 2).map(p => (
                                                 <span key={p} className="text-xs text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded font-medium">
                                                     {PERMISSION_LABELS[p]}
