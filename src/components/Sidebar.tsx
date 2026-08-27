@@ -33,7 +33,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     return (
         <aside
             className={`
-        fixed inset-y-0 left-0 z-30 w-60 flex flex-col
+        fixed inset-y-0 left-0 z-30 w-60 flex flex-col overflow-visible
         bg-zinc-950 border-r border-zinc-800/60
         transition-transform duration-200 ease-in-out
         ${open ? 'translate-x-0' : '-translate-x-full'}
@@ -82,7 +82,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             </nav>
 
             {/* Bottom section */}
-            <div className="px-3 pb-4 space-y-px border-t border-zinc-800/60 pt-3">
+            <div className="relative z-50 px-3 pb-4 space-y-px border-t border-zinc-800/60 pt-3">
                 <CheFuUserDropdown
                     align="left"
                     menuPlacement="top"
