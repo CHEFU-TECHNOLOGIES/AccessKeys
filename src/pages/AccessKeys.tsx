@@ -37,8 +37,8 @@ export default function AccessKeys() {
 
   const filtered = useMemo(() => keys.filter(key => {
     const query = search.toLowerCase();
-    return (!query || key.label.toLowerCase().includes(query) || key.id.toLowerCase().includes(query)) && (status === 'all' || key.status === status);
-  }), [keys, search, status]);
+    return (!query || key.label.toLowerCase().includes(query) || key.id.toLowerCase().includes(query)) && (statusFilter === 'all' || key.status === statusFilter);
+  }), [keys, search, statusFilter]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
