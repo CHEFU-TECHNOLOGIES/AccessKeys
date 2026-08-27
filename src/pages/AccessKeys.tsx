@@ -10,6 +10,7 @@ import RevokeModal from '../modals/RevokeModal';
 import KeyDetailsDrawer from '../modals/KeyDetailsDrawer';
 import { useData } from '../context/DataContext';
 import { AccessKey, KeyStatus, PERMISSION_LABELS } from '../data/sample';
+import { accountLoginUrl } from '../lib/api';
 
 const STATUS_OPTIONS: { label: string; value: KeyStatus | 'all' }[] = [
   { label: 'All statuses', value: 'all' },
@@ -24,7 +25,7 @@ const WORKSPACE_OPTIONS = ['All workspaces', 'Marketing', 'Engineering', 'Operat
 const PAGE_SIZE = 8;
 
 export default function AccessKeys() {
-  const { keys, revokeKey } = useData();
+  const { keys, profile, isLoading, error, revokeKey } = useData();
   const [generateOpen, setGenerateOpen] = useState(false);
   const [revokeOpen, setRevokeOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -34,14 +35,10 @@ export default function AccessKeys() {
   const [workspaceFilter, setWorkspaceFilter] = useState('All workspaces');
   const [page, setPage] = useState(1);
 
-  const filtered = useMemo(() => {
-    return keys.filter(k => {
-      const matchSearch = !search || k.name.toLowerCase().includes(search.toLowerCase()) || k.employee.toLowerCase().includes(search.toLowerCase()) || k.keyMasked.includes(search);
-      const matchStatus = statusFilter === 'all' || k.status === statusFilter;
-      const matchWorkspace = workspaceFilter === 'All workspaces' || k.workspace === workspaceFilter;
-      return matchSearch && matchStatus && matchWorkspace;
-    });
-  }, [keys, search, statusFilter, workspaceFilter]);
+  const filtered = useMemo(() => keys.filter(key => {
+    const query = search.toLowerCase();
+    return (!query || key.label.toLowerCase().includes(query) || key.id.toLowerCase().includes(query)) && (status === 'all' || key.status === status);
+  }), [keys, search, status]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -55,6 +52,9 @@ export default function AccessKeys() {
     setSelectedKey(key);
     setDetailsOpen(true);
   };
+
+  if (isLoading) return <div className="p-8 text-sm text-zinc-500">Loading Flow access keys...</div>;
+  if (error && !profile) return <div className="min-h-full flex items-center justify-center p-6"><div className="max-w-md text-center"><Key className="mx-auto mb-4 text-violet-400" /><h1 className="text-xl font-semibold text-zinc-100">Admin sign-in required</h1><p className="mt-2 text-sm text-zinc-500">{error}</p><Button className="mt-5" onClick={() => window.location.assign(accountLoginUrl(window.location.href))}>Continue with CheFu Account</Button></div></div>;
 
   return (
     <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
@@ -159,7 +159,7 @@ export default function AccessKeys() {
                         <StatusBadge status={key.status} />
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1 max-w-[180px]">
+                        <div className="flex flex-wrap gap-1 max-w-45">
                           {key.permissions.slice(0, 2).map(p => (
                             <span key={p} className="text-xs text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded font-medium whitespace-nowrap">
                               {PERMISSION_LABELS[p]}

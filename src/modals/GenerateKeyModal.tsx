@@ -1,29 +1,8 @@
 import { useState } from "react";
-import {
-  Check,
-  Copy,
-  Download,
-  Key,
-  AlertTriangle,
-  ChevronDown,
-} from "lucide-react";
+import { Check, Copy, Download, Key, AlertTriangle } from "lucide-react";
 import Modal from "../components/ui/Modal";
 import Button from "../components/ui/Button";
-import {
-  Permission,
-  PERMISSION_LABELS,
-  PERMISSION_DESCRIPTIONS,
-  AccessKey,
-  employees,
-} from "../data/sample";
 import { useData } from "../context/DataContext";
-
-const PERMISSIONS: Permission[] = [
-  "send_email",
-  "view_logs",
-  "manage_templates",
-  "api_access",
-];
 
 const EXPIRY_OPTIONS = [
   { label: "7 days", value: "7d" },
@@ -33,15 +12,6 @@ const EXPIRY_OPTIONS = [
   { label: "Never", value: "never" },
   { label: "Custom date", value: "custom" },
 ];
-
-function generateKey() {
-  const chars = "abcdef0123456789";
-  let key = "FLOW_";
-  for (let i = 0; i < 32; i++) {
-    key += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return key;
-}
 
 function getExpiryDate(value: string): string | null {
   if (value === "never") return null;
@@ -71,48 +41,18 @@ export default function GenerateKeyModal({
   open,
   onClose,
 }: GenerateKeyModalProps) {
-  const { addKey } = useData();
+  const { createKey } = useData();
   const [step, setStep] = useState<"form" | "success">("form");
-  const [selectedEmployee, setSelectedEmployee] = useState("");
   const [keyName, setKeyName] = useState("");
   const [expiry, setExpiry] = useState("90d");
   const [customDate, setCustomDate] = useState("");
-  const [permissions, setPermissions] = useState<Permission[]>(["send_email"]);
   const [generatedKey, setGeneratedKey] = useState("");
   const [copied, setCopied] = useState(false);
-  const [assignType, setAssignType] = useState<"employee" | "workspace">(
-    "employee",
-  );
-
-  const selectedEmp = employees.find((e) => e.id === selectedEmployee);
-
-  const handleGenerate = () => {
-    if (!selectedEmployee || !keyName || permissions.length === 0) return;
-    const key = generateKey();
-    setGeneratedKey(key);
-
+  const handleGenerate = async () => {
+    if (!keyName.trim()) return;
     const expDate = expiry === "custom" ? customDate : getExpiryDate(expiry);
-    const newKey: AccessKey = {
-      id: `ak_${Date.now()}`,
-      name: keyName,
-      employee: selectedEmp?.name ?? "",
-      employeeId: selectedEmployee,
-      workspace: selectedEmp?.workspace ?? "",
-      keyMasked: `FLOW_••••••••••••${key.slice(-4).toUpperCase()}`,
-      keyLastFour: key.slice(-4).toUpperCase(),
-      status: "active",
-      permissions,
-      created: new Date().toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-      expires: expDate,
-      lastUsed: "Just now",
-      createdBy: "Admin",
-      createdFrom: "Dashboard",
-    };
-    addKey(newKey);
+    const created = await createKey(keyName.trim(), expDate ? new Date(expDate).toISOString() : null);
+    setGeneratedKey(created.accessKey);
     setStep("success");
   };
 
@@ -123,7 +63,7 @@ export default function GenerateKeyModal({
   };
 
   const handleDownload = () => {
-    const content = `AccessKey credential\n\nName: ${keyName}\nEmployee: ${selectedEmp?.name}\nKey: ${generatedKey}\nCreated: ${new Date().toISOString()}\n\nStore this credential securely. It will not be shown again.`;
+    const content = `Flow access key\n\nLabel: ${keyName}\nKey: ${generatedKey}\nCreated: ${new Date().toISOString()}\n\nStore this credential securely. It will not be shown again.`;
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -137,22 +77,14 @@ export default function GenerateKeyModal({
     onClose();
     setTimeout(() => {
       setStep("form");
-      setSelectedEmployee("");
       setKeyName("");
       setExpiry("90d");
-      setPermissions(["send_email"]);
       setGeneratedKey("");
       setCopied(false);
     }, 200);
   };
 
-  const togglePermission = (p: Permission) => {
-    setPermissions((prev) =>
-      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p],
-    );
-  };
-
-  const isValid = selectedEmployee && keyName.trim() && permissions.length > 0;
+  const isValid = keyName.trim();
 
   return (
     <Modal open={open} onClose={handleClose} width="max-w-xl" showClose={false}>
@@ -164,7 +96,7 @@ export default function GenerateKeyModal({
                 Generate access key
               </h2>
               <p className="text-sm text-zinc-500 mt-0.5">
-                Create a secure credential for an employee or workspace.
+                Create a secure credential for a Flow integration.
               </p>
             </div>
             <button
@@ -176,50 +108,6 @@ export default function GenerateKeyModal({
           </div>
 
           <div className="px-6 py-5 space-y-5">
-            {/* Type toggle */}
-            <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-2">
-                Assign to
-              </label>
-              <div className="flex gap-1 p-0.5 bg-zinc-800 rounded-lg w-fit">
-                {(["employee", "workspace"] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setAssignType(t)}
-                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                      assignType === t
-                        ? "bg-zinc-700 text-zinc-100 shadow-sm"
-                        : "text-zinc-500 hover:text-zinc-300"
-                    }`}
-                  >
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Employee/Workspace selector */}
-            <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-                {assignType === "employee" ? "Employee" : "Workspace"}
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(e.target.value)}
-                  className="w-full h-9 pl-3 pr-8 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-200 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30 appearance-none transition-colors"
-                >
-                  <option value="">Select an employee...</option>
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} — {emp.workspace}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
-              </div>
-            </div>
-
             {/* Key name */}
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-1.5">
@@ -264,48 +152,6 @@ export default function GenerateKeyModal({
               )}
             </div>
 
-            {/* Permissions */}
-            <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-2">
-                Permissions
-              </label>
-              <div className="space-y-1.5">
-                {PERMISSIONS.map((p) => (
-                  <label
-                    key={p}
-                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                      permissions.includes(p)
-                        ? "bg-violet-500/8 border-violet-500/30"
-                        : "bg-zinc-800/50 border-zinc-800 hover:border-zinc-700"
-                    }`}
-                  >
-                    <div
-                      className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
-                        permissions.includes(p)
-                          ? "bg-violet-500 border-violet-500"
-                          : "bg-transparent border-zinc-600"
-                      }`}
-                      onClick={() => togglePermission(p)}
-                    >
-                      {permissions.includes(p) && (
-                        <Check
-                          className="w-2.5 h-2.5 text-white"
-                          strokeWidth={3}
-                        />
-                      )}
-                    </div>
-                    <div onClick={() => togglePermission(p)}>
-                      <p className="text-sm font-medium text-zinc-200">
-                        {PERMISSION_LABELS[p]}
-                      </p>
-                      <p className="text-xs text-zinc-500 mt-0.5">
-                        {PERMISSION_DESCRIPTIONS[p]}
-                      </p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
           </div>
 
           <div className="px-6 py-4 border-t border-zinc-800 flex items-center justify-end gap-2">
@@ -355,7 +201,7 @@ export default function GenerateKeyModal({
               <Button
                 variant="primary"
                 onClick={handleCopy}
-                className={`flex-1 ${copied ? "!bg-emerald-600 !border-emerald-500/50" : ""}`}
+                className={`flex-1 ${copied ? "bg-emerald-600! border-emerald-500/50!" : ""}`}
               >
                 {copied ? (
                   <>
@@ -395,13 +241,13 @@ export default function GenerateKeyModal({
               <div className="flex items-center justify-between py-2 border-b border-zinc-800">
                 <span className="text-xs text-zinc-500">Employee</span>
                 <span className="text-xs text-zinc-300">
-                  {selectedEmp?.name}
+                  Flow integration
                 </span>
               </div>
               <div className="flex items-center justify-between py-2">
                 <span className="text-xs text-zinc-500">Permissions</span>
                 <span className="text-xs text-zinc-300">
-                  {permissions.length} granted
+                  Flow access
                 </span>
               </div>
             </div>
