@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router';
-import { KeyRound, X, Shield, LogOut, UserRound } from 'lucide-react';
-import Dropdown from './ui/Dropdown';
+import { KeyRound, X, Shield } from 'lucide-react';
+import { CheFuUserDropdown, type CheFuUserDropdownUser } from 'chefu-ui';
 import { useData } from '../context/DataContext';
 import { accountLogoutUrl } from '../lib/api';
 
@@ -25,6 +25,10 @@ interface SidebarProps {
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
     const { profile } = useData();
+    const user: CheFuUserDropdownUser = {
+        displayName: profile?.email || 'Admin User',
+        email: profile?.email || undefined,
+    };
 
     return (
         <aside
@@ -79,35 +83,14 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
             {/* Bottom section */}
             <div className="px-3 pb-4 space-y-px border-t border-zinc-800/60 pt-3">
-                <Dropdown
+                <CheFuUserDropdown
                     align="left"
-                    trigger={
-                        <button
-                            type="button"
-                            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors"
-                        >
-                            <Avatar name={profile?.email || 'Admin User'} />
-                            <span className="flex-1 min-w-0 text-left">
-                                <span className="block font-medium text-zinc-300 truncate text-xs">
-                                    {profile?.email || 'Admin User'}
-                                </span>
-                                <span className="block text-zinc-500 truncate text-xs">
-                                    {profile?.roles.join(', ') || 'Administrator'}
-                                </span>
-                            </span>
-                            <UserRound className="w-3.5 h-3.5 text-zinc-600 shrink-0" />
-                        </button>
-                    }
-                    items={[
-                        { label: 'Account profile', icon: <UserRound />, onClick: () => {} },
-                        {
-                            label: 'Sign out',
-                            icon: <LogOut />,
-                            danger: true,
-                            divider: true,
-                            onClick: () => window.location.assign(accountLogoutUrl(window.location.origin)),
-                        },
-                    ]}
+                    menuPlacement="top"
+                    showUserDetails
+                    triggerClassName="w-full justify-start rounded-md border-transparent bg-transparent px-2 py-2 hover:bg-zinc-800/50"
+                    user={user}
+                    variant="purple"
+                    onSignOut={() => window.location.assign(accountLogoutUrl(window.location.origin))}
                 />
             </div>
         </aside>

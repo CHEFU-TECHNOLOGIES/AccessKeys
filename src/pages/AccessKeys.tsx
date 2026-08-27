@@ -8,9 +8,10 @@ import Dropdown from '../components/ui/Dropdown';
 import GenerateKeyModal from '../modals/GenerateKeyModal';
 import RevokeModal from '../modals/RevokeModal';
 import KeyDetailsDrawer from '../modals/KeyDetailsDrawer';
+import AccessKeysSkeleton from '../components/AccessKeysSkeleton';
+import AdminSignInRequired from '../components/AdminSignInRequired';
 import { useData } from '../context/DataContext';
 import { AccessKey, KeyStatus, PERMISSION_LABELS } from '../data/sample';
-import { accountLoginUrl } from '../lib/api';
 
 const STATUS_OPTIONS: { label: string; value: KeyStatus | 'all' }[] = [
   { label: 'All statuses', value: 'all' },
@@ -53,8 +54,8 @@ export default function AccessKeys() {
     setDetailsOpen(true);
   };
 
-  if (isLoading) return <div className="p-8 text-sm text-zinc-500">Loading Flow access keys...</div>;
-  if (error && !profile) return <div className="min-h-full flex items-center justify-center p-6"><div className="max-w-md text-center"><Key className="mx-auto mb-4 text-violet-400" /><h1 className="text-xl font-semibold text-zinc-100">Admin sign-in required</h1><p className="mt-2 text-sm text-zinc-500">{error}</p><Button className="mt-5" onClick={() => window.location.assign(accountLoginUrl(window.location.href))}>Continue with CheFu Account</Button></div></div>;
+  if (isLoading) return <AccessKeysSkeleton />;
+  if (error && !profile) return <AdminSignInRequired message={error} />;
 
   return (
     <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
