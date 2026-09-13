@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router';
-import { KeyRound, X, Shield } from 'lucide-react';
+import { KeyRound, X, Shield, Store } from 'lucide-react';
 import { CheFuUserDropdown, type CheFuUserDropdownUser } from 'chefu-ui';
 import { useData } from '../context/DataContext';
 import { accountLogoutUrl } from '../lib/api';
 
 const navItems = [
     { to: '/', label: 'Flow access keys', icon: KeyRound, end: true },
+    { to: '/merchant', label: 'Chefu products', icon: Store, end: false },
 ];
 
 function Avatar({ name, size = 'sm' }: { name: string; size?: 'sm' | 'md' }) {

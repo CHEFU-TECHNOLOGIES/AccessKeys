@@ -40,7 +40,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 }
 
 export default function Settings() {
-  const [orgName, setOrgName] = useState('CHEFU Technologies');
+  const [orgName, setOrgName] = useState('Chefu Technologies');
   const [defaultWs, setDefaultWs] = useState('Engineering');
   const [requireExpiry, setRequireExpiry] = useState(true);
   const [maxLifetime, setMaxLifetime] = useState('1y');
